@@ -6,6 +6,31 @@ All notable changes to specify-pmi (formerly specify-core and specify-core-rust)
 
 ## Unreleased
 
+- **`WorkerClient.acceptDefaults(file, answers)`** returns `answers` with Specify's defaults accepted for the file
+  (the worker's `accept-defaults` op, the engine's free `acceptDefaults` on its analysis); a host saves them with
+  `edit(file, { edits: accepted })`. Reads only.
+- **A saved STEP leaves the engine as bytes, not a JSON number list**: the WASM `IntentEngine.editFile` gives an
+  `EditedFile` (`json`: `{written, report, source_sha256}` or the refusal; `bytes()`: a `Uint8Array`), and the UI
+  worker's `edit` op uses it and moves the bytes to the page without copying (`Edited.bytes` stays a `Uint8Array`).
+  `edit` (JSON, `bytes: number[]`) is unchanged for small files.
+- **`@draftwright/specify-ui/helpers` loads under plain Node and carries the host's whole non-DOM surface**: the
+  xlsx/zip writer, the diff and PMI-diff functions, `WorkerClient`, `createIntentEngine`, `tolerancingMode`,
+  `intentParts`, `intentPart`, `editorDefault` (and the `GdtMode` and `IntentPart` types) and `readCarried`, beside the characteristics and AS9102
+  helpers it had. The root entry imports CSS, which Node cannot load. `test/helpers-node.test.mjs` imports the built
+  entry in a fresh Node.
+- **`rematchAnswers` reads schema 1 evidence held outside the STEP** (a saved project's, from the pre-alpha browser
+  writer). Its fingerprint keeps the signs of zero and is not reproduced by this kernel; with the same face count it
+  is now read as the file's own copy is, answers matched by feature ID with `unverified` saying why, where it held
+  every feature and datum answer open. Schemas 2 and 3 were read already.
+- **A host can save and rematch with `@draftwright/specify-ui` alone** (no copy of the app's editor code). The
+  engine worker gains `edit` (an edit list or a 0.2 answers file applied all or nothing: the new bytes, or every
+  refused entry), `rematch` (`rematchAnswers`) and `table`, as typed calls on `WorkerClient`
+  (`engine.edit/rematch/table`). The answers-to-edit-list translation moves from `ui/app` into the package as the
+  new `@draftwright/specify-ui/edits` entry (`editList`, `answerEdit`, `PendingEdits`, `panelModel`, `statedRows`,
+  `tableOf` and the `FeatureTable`, `EditList`, `Pending`, `EditFailure` types); the local app imports it from there.
+  `.pmi-lab-pane` now fills its positioned container in the package's own CSS, and StepDiff's page-level
+  `html body` rule applies only to a page that holds a diff. The datum-removal confirmation is in the panel
+  row, no longer a native dialog. README: "Embedding and saving".
 - **Inspection balloons are drawn on the 3D callouts again** (`@draftwright/specify-ui`). Since the unified 3D
   PMI view the numbers only reached the HTML fallback labels, so a callout drawn in its annotation plane
   had none. Every drawn callout that has a characteristic number now carries a balloon (a ring, or a
